@@ -547,11 +547,26 @@ tbody tr:last-child td { border-bottom: none; }
         <div class="tile"><div class="tile-label">N° versamenti</div><div class="tile-val c-accent" id="det-count"></div></div>
         <div class="tile"><div class="tile-label">Ultimo vers.</div><div class="tile-val" id="det-last" style="font-size:14px"></div></div>
       </div>
+
+      <!-- FORM MODIFICA PERSONA (nascosto di default) -->
+      <div id="edit-persona-form" class="card" style="display:none;margin-bottom:16px;padding:18px;">
+        <div class="sh-title" style="margin-bottom:14px;">Modifica persona</div>
+        <div class="form-group"><label class="form-label">Nome mamma</label><input class="form-input" id="ep-nome" type="text"></div>
+        <div class="form-group"><label class="form-label">Nome bambino/a <span style="font-weight:400;color:var(--fg-muted)">(opzionale)</span></label><input class="form-input" id="ep-bambino" type="text"></div>
+        <div class="form-group"><label class="form-label">Telefono <span style="font-weight:400;color:var(--fg-muted)">(opzionale)</span></label><input class="form-input" id="ep-tel" type="tel"></div>
+        <div class="form-group"><label class="form-label">Quota €</label><input class="form-input" id="ep-quota" type="number" step="0.01" min="0"></div>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <button class="btn btn-primary" id="btn-save-edit-persona" onclick="saveEditPersona()">Salva modifiche</button>
+          <button class="btn" onclick="toggleEditPersona()">Annulla</button>
+        </div>
+      </div>
+
       <div class="sh">
         <div class="sh-title">Storico versamenti</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="btn btn-primary btn-sm" onclick="goVersamentoPersona()">+ Versamento</button>
           <button class="btn btn-pdf btn-sm" onclick="generatePDFPersona(dettaglioPersonaId)">📄 PDF</button>
+          <button class="btn btn-sm" style="background:var(--accent-light);color:var(--accent-text);border:1px solid var(--accent);" onclick="toggleEditPersona()">✏️ Modifica</button>
           <button class="btn btn-sm" style="background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger);" onclick="deletePersona(dettaglioPersonaId)">🗑 Elimina</button>
         </div>
       </div>
@@ -879,6 +894,41 @@ function renderPersone() {
 function openDettaglio(pid) {
   dettaglioPersonaId = pid;
   go('dettaglio');
+}
+
+function toggleEditPersona() {
+  const form = document.getElementById('edit-persona-form');
+  const visible = form.style.display !== 'none';
+  if(visible){ form.style.display = 'none'; return; }
+  const p = persone.find(x=>x.id===dettaglioPersonaId);
+  if(!p) return;
+  document.getElementById('ep-nome').value    = p.nome || '';
+  document.getElementById('ep-bambino').value = p.bambino || '';
+  document.getElementById('ep-tel').value     = p.tel || '';
+  document.getElementById('ep-quota').value   = p.quota || cfg.quotaDefault;
+  form.style.display = 'block';
+  document.getElementById('ep-nome').focus();
+}
+
+async function saveEditPersona() {
+  const p = persone.find(x=>x.id===dettaglioPersonaId);
+  if(!p) return;
+  const nome    = document.getElementById('ep-nome').value.trim();
+  if(!nome){ document.getElementById('ep-nome').focus(); return; }
+  const bambino = document.getElementById('ep-bambino').value.trim();
+  const tel     = document.getElementById('ep-tel').value.trim();
+  const quota   = parseFloat(document.getElementById('ep-quota').value) || cfg.quotaDefault;
+  setBtnLoading('btn-save-edit-persona', true, 'Salvo…');
+  const { data, error } = await sb.from('zpaylisa_persone')
+    .update({ nome, bambino: bambino||null, tel: tel||null, quota })
+    .eq('id', p.id).select().single();
+  setBtnLoading('btn-save-edit-persona', false, 'Salva modifiche');
+  if(error){ toast('Errore: ' + error.message, true); return; }
+  Object.assign(p, data);
+  persone.sort((a,b)=>a.nome.localeCompare(b.nome));
+  document.getElementById('edit-persona-form').style.display = 'none';
+  toast('✓ Modifiche salvate');
+  renderDettaglio();
 }
 
 async function deletePersona(pid) {
