@@ -552,6 +552,7 @@ tbody tr:last-child td { border-bottom: none; }
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="btn btn-primary btn-sm" onclick="goVersamentoPersona()">+ Versamento</button>
           <button class="btn btn-pdf btn-sm" onclick="generatePDFPersona(dettaglioPersonaId)">📄 PDF</button>
+          <button class="btn btn-sm" style="background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger);" onclick="deletePersona(dettaglioPersonaId)">🗑 Elimina</button>
         </div>
       </div>
       <div class="card" id="det-table"></div>
@@ -878,6 +879,20 @@ function renderPersone() {
 function openDettaglio(pid) {
   dettaglioPersonaId = pid;
   go('dettaglio');
+}
+
+async function deletePersona(pid) {
+  const p = persone.find(x=>x.id===pid);
+  if(!p) return;
+  if(!confirm(`Eliminare "${p.nome}" e tutti i suoi versamenti?`)) return;
+  const { error: eVers } = await sb.from('zpaylisa_versamenti').delete().eq('persona_id', pid);
+  if(eVers){ toast('Errore eliminazione versamenti: ' + eVers.message, true); return; }
+  const { error } = await sb.from('zpaylisa_persone').delete().eq('id', pid);
+  if(error){ toast('Errore: ' + error.message, true); return; }
+  persone = persone.filter(x=>x.id!==pid);
+  versamenti = versamenti.filter(x=>x.persona_id!==pid);
+  toast('✓ Persona eliminata');
+  go('persone');
 }
 
 function renderDettaglio() {
