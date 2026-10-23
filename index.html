@@ -277,7 +277,17 @@ tbody tr:last-child td { border-bottom: none; }
   -webkit-tap-highlight-color: transparent;
 }
 .back-btn:hover { background: var(--accent-light); }
-.detail-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-light); color: var(--accent-text); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+.detail-avatar { width: 54px; height: 54px; border-radius: 50%; background: var(--accent-light); color: var(--accent-text); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+.det-photo-wrap { width: 54px; height: 54px; border-radius: 50%; position: relative; cursor: pointer; flex-shrink: 0; overflow: hidden; }
+.det-photo-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+.det-photo-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.45); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: .15s; font-size: 17px; }
+.det-photo-wrap:hover .det-photo-overlay { opacity: 1; }
+.foto-upload-area { display: flex; align-items: center; gap: 14px; border: 1.5px dashed var(--border); border-radius: 10px; padding: 12px 14px; background: var(--bg); cursor: pointer; transition: .15s; }
+.foto-upload-area:hover { border-color: var(--accent); background: var(--accent-light); }
+.foto-thumb { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-light); border: 2px dashed var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; font-size: 20px; }
+.foto-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.foto-text strong { display: block; font-size: 13px; font-weight: 500; }
+.foto-text span { font-size: 11.5px; color: var(--fg-muted); }
 .detail-info .d-name { font-size: 18px; font-weight: 600; }
 .detail-info .d-bambino { font-size: 13px; color: var(--fg-muted); }
 .detail-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 20px; }
@@ -536,7 +546,12 @@ tbody tr:last-child td { border-bottom: none; }
         <div class="back-btn" onclick="go('persone')">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
         </div>
-        <div class="detail-avatar" id="det-avatar"></div>
+        <div class="det-photo-wrap" onclick="triggerFotoUpload()" title="Carica / cambia foto">
+          <div class="detail-avatar" id="det-avatar"></div>
+          <img id="det-photo-img" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%">
+          <div class="det-photo-overlay">📷</div>
+          <input type="file" id="det-foto-input" accept="image/*" style="display:none" onchange="onDetFotoSelected(event)">
+        </div>
         <div class="detail-info">
           <div class="d-name" id="det-name"></div>
           <div class="d-bambino" id="det-bambino"></div>
@@ -551,6 +566,14 @@ tbody tr:last-child td { border-bottom: none; }
       <!-- FORM MODIFICA PERSONA (nascosto di default) -->
       <div id="edit-persona-form" class="card" style="display:none;margin-bottom:16px;padding:18px;">
         <div class="sh-title" style="margin-bottom:14px;">Modifica persona</div>
+        <div class="form-group">
+          <label class="form-label">Foto <span style="font-weight:400;color:var(--fg-muted)">(opzionale)</span></label>
+          <div class="foto-upload-area" onclick="document.getElementById('ep-foto-input').click()">
+            <div class="foto-thumb" id="ep-foto-thumb">👤</div>
+            <div class="foto-text"><strong>Clicca per cambiare foto</strong><span>JPG, PNG — max 2 MB</span></div>
+          </div>
+          <input type="file" id="ep-foto-input" accept="image/*" style="display:none" onchange="onEditFotoSelected(event)">
+        </div>
         <div class="form-group"><label class="form-label">Nome mamma</label><input class="form-input" id="ep-nome" type="text"></div>
         <div class="form-group"><label class="form-label">Nome bambino/a <span style="font-weight:400;color:var(--fg-muted)">(opzionale)</span></label><input class="form-input" id="ep-bambino" type="text"></div>
         <div class="form-group"><label class="form-label">Telefono <span style="font-weight:400;color:var(--fg-muted)">(opzionale)</span></label><input class="form-input" id="ep-tel" type="tel"></div>
@@ -605,6 +628,14 @@ tbody tr:last-child td { border-bottom: none; }
       <div class="form-wrap">
         <div class="form-card">
           <div class="form-head"><h2>Aggiungi persona</h2><p>Inserisci i dati della mamma e del bambino</p></div>
+          <div class="form-group">
+            <label class="form-label">Foto <em>(opzionale)</em></label>
+            <div class="foto-upload-area" onclick="document.getElementById('f-foto-input').click()">
+              <div class="foto-thumb" id="f-foto-thumb">👤</div>
+              <div class="foto-text"><strong>Clicca per scegliere una foto</strong><span>JPG, PNG — max 2 MB</span></div>
+            </div>
+            <input type="file" id="f-foto-input" accept="image/*" style="display:none" onchange="onAddFotoSelected(event)">
+          </div>
           <div class="form-group">
             <label class="form-label">Nome mamma</label>
             <input class="form-input" id="f-mamma" type="text" placeholder="es. Giulia Rossi">
@@ -706,6 +737,10 @@ tbody tr:last-child td { border-bottom: none; }
               <input class="settings-input" id="cfg-quota" type="number" step="1" value="20">
             </div>
             <div class="settings-row">
+              <div><div class="sr-label">Fondo Cassa 2026 (€)</div><div class="sr-sub">Credito iniziale — aggiunto al saldo reale</div></div>
+              <input class="settings-input" id="cfg-fondo" type="number" step="0.01" value="0">
+            </div>
+            <div class="settings-row">
               <div><div class="sr-label">Nome classe</div><div class="sr-sub">Visualizzato in sidebar</div></div>
               <input class="settings-input" id="cfg-classe" type="text" value="3ª B" style="text-align:left;width:100px">
             </div>
@@ -727,7 +762,7 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 // ─── STATE (caricato da Supabase) ─────────────────────────
-let cfg = { plafond: 520, quotaDefault: 20, classe: '3ª B' };
+let cfg = { plafond: 520, quotaDefault: 20, classe: '3ª B', fondoCassa: 0 };
 let persone    = [];
 let versamenti = [];
 let uscite     = [];
@@ -776,9 +811,10 @@ async function loadAll() {
   if(rUsc.error)     console.error('uscite:', rUsc.error);
 
   if(rCfg.data) {
-    cfg.plafond      = Number(rCfg.data.plafond)      || 520;
-    cfg.quotaDefault = Number(rCfg.data.quota_default) || 20;
-    cfg.classe       = rCfg.data.classe                || '3ª B';
+    cfg.plafond      = Number(rCfg.data.plafond)       || 520;
+    cfg.quotaDefault = Number(rCfg.data.quota_default)  || 20;
+    cfg.classe       = rCfg.data.classe                 || '3ª B';
+    cfg.fondoCassa   = Number(rCfg.data.fondo_cassa)    || 0;
   }
   persone    = rPersone.data  || [];
   versamenti = rVers.data     || [];
@@ -836,12 +872,14 @@ function renderView(v) {
 }
 
 function renderDashboard() {
-  const ent = totEntrate(), usc = totUscite(), saldo = ent - usc;
+  const ent = totEntrate(), usc = totUscite(), saldo = cfg.fondoCassa + ent - usc;
   const perc = cfg.plafond > 0 ? Math.min(100, Math.round(ent/cfg.plafond*100)) : 0;
   document.getElementById('dash-entrate').textContent    = fmt(ent);
   document.getElementById('dash-plafond-sub').textContent= `su plafond ${fmt(cfg.plafond)}`;
   document.getElementById('dash-saldo').textContent      = fmt(saldo);
-  document.getElementById('dash-uscite-sub').textContent = `uscite ${fmt(usc)}`;
+  document.getElementById('dash-uscite-sub').textContent = cfg.fondoCassa > 0
+    ? `fondo ${fmt(cfg.fondoCassa)} · uscite ${fmt(usc)}`
+    : `uscite ${fmt(usc)}`;
   document.getElementById('dash-perc').textContent       = perc + '%';
   document.getElementById('dash-bar').style.width        = perc + '%';
 
@@ -874,9 +912,12 @@ function renderPersone() {
   grid.innerHTML = persone.map(p => {
     const tot   = totVers(p.id);
     const stato = tot>0 ? `<span class="badge b-ok">✓ Versato</span>` : `<span class="badge b-warn">In attesa</span>`;
+    const avHtml = p.foto
+      ? `<div class="avatar" style="padding:0;overflow:hidden"><img src="${p.foto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>`
+      : `<div class="avatar">${initials(p.nome)}</div>`;
     return `<div class="persona-card" onclick="openDettaglio(${p.id})">
       <div class="p-left">
-        <div class="avatar">${initials(p.nome)}</div>
+        ${avHtml}
         <div>
           <div class="p-name">${p.nome}</div>
           <div class="p-bambino">${p.bambino||'—'}</div>
@@ -906,6 +947,11 @@ function toggleEditPersona() {
   document.getElementById('ep-bambino').value = p.bambino || '';
   document.getElementById('ep-tel').value     = p.tel || '';
   document.getElementById('ep-quota').value   = p.quota || cfg.quotaDefault;
+  // foto thumb nel form modifica
+  const epThumb = document.getElementById('ep-foto-thumb');
+  if(epThumb){ epThumb.innerHTML = p.foto ? `<img src="${p.foto}">` : '👤'; }
+  const epFotoInput = document.getElementById('ep-foto-input');
+  if(epFotoInput) epFotoInput._b64 = null; // reset pending
   form.style.display = 'block';
   document.getElementById('ep-nome').focus();
 }
@@ -918,9 +964,13 @@ async function saveEditPersona() {
   const bambino = document.getElementById('ep-bambino').value.trim();
   const tel     = document.getElementById('ep-tel').value.trim();
   const quota   = parseFloat(document.getElementById('ep-quota').value) || cfg.quotaDefault;
+  const epFotoInput = document.getElementById('ep-foto-input');
+  const nuovaFoto = epFotoInput && epFotoInput._b64 ? epFotoInput._b64 : undefined;
   setBtnLoading('btn-save-edit-persona', true, 'Salvo…');
+  const updatePayload = { nome, bambino: bambino||null, tel: tel||null, quota };
+  if(nuovaFoto !== undefined) updatePayload.foto = nuovaFoto;
   const { data, error } = await sb.from('zpaylisa_persone')
-    .update({ nome, bambino: bambino||null, tel: tel||null, quota })
+    .update(updatePayload)
     .eq('id', p.id).select().single();
   setBtnLoading('btn-save-edit-persona', false, 'Salva modifiche');
   if(error){ toast('Errore: ' + error.message, true); return; }
@@ -952,7 +1002,10 @@ function renderDettaglio() {
   const tot  = pvs.reduce((s,v)=>s+Number(v.importo),0);
   const last = pvs.length ? fmtDate(pvs[0].data) : '—';
 
-  document.getElementById('det-avatar').textContent  = initials(p.nome);
+  const avatarEl = document.getElementById('det-avatar');
+  const photoEl  = document.getElementById('det-photo-img');
+  if(p.foto){ avatarEl.style.display='none'; photoEl.style.display='block'; photoEl.src=p.foto; }
+  else { avatarEl.style.display='flex'; avatarEl.textContent=initials(p.nome); photoEl.style.display='none'; }
   document.getElementById('det-name').textContent    = p.nome;
   document.getElementById('det-bambino').textContent = p.bambino ? `Bambino: ${p.bambino}` : 'Nessun bambino registrato';
   document.getElementById('det-tot').textContent     = fmt(tot);
@@ -1017,6 +1070,7 @@ function renderFormVers() {
 function renderSettings() {
   document.getElementById('cfg-plafond').value = cfg.plafond;
   document.getElementById('cfg-quota').value   = cfg.quotaDefault;
+  document.getElementById('cfg-fondo').value   = cfg.fondoCassa;
   document.getElementById('cfg-classe').value  = cfg.classe;
 }
 
@@ -1030,12 +1084,14 @@ async function doAddPersona() {
   if(!nome){ document.getElementById('f-mamma').focus(); return; }
   const bambino  = document.getElementById('f-bambino').value.trim();
   const tel      = document.getElementById('f-tel').value.trim();
-  const quotaRaw = document.getElementById('f-quota').value;
-  const quota    = quotaRaw ? parseFloat(quotaRaw) : cfg.quotaDefault;
+  const quotaRaw  = document.getElementById('f-quota').value;
+  const quota     = quotaRaw ? parseFloat(quotaRaw) : cfg.quotaDefault;
+  const fotoInput = document.getElementById('f-foto-input');
+  const foto      = fotoInput && fotoInput._b64 ? fotoInput._b64 : null;
 
   setBtnLoading('btn-add-persona', true);
   const { data, error } = await sb.from('zpaylisa_persone')
-    .insert({ nome, bambino: bambino||null, tel: tel||null, quota })
+    .insert({ nome, bambino: bambino||null, tel: tel||null, quota, foto: foto||null })
     .select().single();
   setBtnLoading('btn-add-persona', false, 'Salva');
 
@@ -1043,6 +1099,8 @@ async function doAddPersona() {
   persone.push(data);
   persone.sort((a,b)=>a.nome.localeCompare(b.nome));
   ['f-mamma','f-bambino','f-tel','f-quota'].forEach(id=>{ document.getElementById(id).value=''; });
+  const fi = document.getElementById('f-foto-input'); if(fi){ fi.value=''; fi._b64=null; }
+  const ft = document.getElementById('f-foto-thumb'); if(ft){ ft.innerHTML='👤'; }
   toast(`✓ ${nome} aggiunta`);
   setTimeout(()=>go('persone'), 300);
 }
@@ -1092,16 +1150,18 @@ async function doAddUscita() {
 async function saveSettings() {
   const plafond      = parseFloat(document.getElementById('cfg-plafond').value)||0;
   const quota_default= parseFloat(document.getElementById('cfg-quota').value)||20;
+  const fondo_cassa  = parseFloat(document.getElementById('cfg-fondo').value)||0;
   const classe       = document.getElementById('cfg-classe').value.trim()||'—';
 
   setBtnLoading('btn-save-cfg', true, 'Salvo…');
   const { error } = await sb.from('zpaylisa_config')
-    .upsert({ id: 1, plafond, quota_default, classe }, { onConflict: 'id' });
+    .upsert({ id: 1, plafond, quota_default, fondo_cassa, classe }, { onConflict: 'id' });
   setBtnLoading('btn-save-cfg', false, 'Salva impostazioni');
 
   if(error){ toast('Errore: ' + error.message, true); return; }
   cfg.plafond      = plafond;
   cfg.quotaDefault = quota_default;
+  cfg.fondoCassa   = fondo_cassa;
   cfg.classe       = classe;
   document.getElementById('sidebar-classe').textContent = classe;
   toast('✓ Impostazioni salvate');
@@ -1204,6 +1264,64 @@ function generatePDFUscite() {
   doc.text('PayLisa · '+cfg.classe,M,288);
   doc.text('Documento generato automaticamente',W-M,288,{align:'right'});
   doc.save('paylisa_uscite.pdf');
+}
+
+// ─── FOTO HELPERS ────────────────────────────────────────
+function compressImage(file, size=160) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const min = Math.min(img.width, img.height);
+        const sx = (img.width-min)/2, sy = (img.height-min)/2;
+        canvas.width = canvas.height = size;
+        canvas.getContext('2d').drawImage(img, sx, sy, min, min, 0, 0, size, size);
+        resolve(canvas.toDataURL('image/jpeg', 0.78));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Foto nel dettaglio persona — click sull'avatar
+function triggerFotoUpload() {
+  document.getElementById('det-foto-input').click();
+}
+
+async function onDetFotoSelected(evt) {
+  const file = evt.target.files[0];
+  if(!file) return;
+  const b64 = await compressImage(file, 180);
+  const pid = dettaglioPersonaId;
+  const { error } = await sb.from('zpaylisa_persone').update({ foto: b64 }).eq('id', pid);
+  if(error){ toast('Errore salvataggio foto: ' + error.message, true); return; }
+  const p = persone.find(x=>x.id===pid);
+  if(p) p.foto = b64;
+  renderDettaglio();
+  toast('✓ Foto aggiornata');
+}
+
+// Foto nel form modifica
+async function onEditFotoSelected(evt) {
+  const file = evt.target.files[0];
+  if(!file) return;
+  const b64 = await compressImage(file, 180);
+  evt.target._b64 = b64;
+  const thumb = document.getElementById('ep-foto-thumb');
+  if(thumb) thumb.innerHTML = `<img src="${b64}">`;
+}
+
+// Foto nel form aggiungi persona
+async function onAddFotoSelected(evt) {
+  const file = evt.target.files[0];
+  if(!file) return;
+  const b64 = await compressImage(file, 180);
+  evt.target._b64 = b64;
+  const thumb = document.getElementById('f-foto-thumb');
+  if(thumb) thumb.innerHTML = `<img src="${b64}">`;
 }
 
 // ─── INIT ────────────────────────────────────────────────
