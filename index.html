@@ -28,6 +28,8 @@
   --shadow: 0 1px 3px rgba(30,27,46,0.08), 0 1px 2px rgba(30,27,46,0.04);
   --r: 12px;
   --sidebar-w: 232px;
+  --sidebar-w-collapsed: 64px;
+  --sidebar-toggle-size: 28px;
   --bottom-nav-h: 64px;
 }
 @media (prefers-color-scheme: dark) {
@@ -97,18 +99,31 @@ body {
   position: fixed;
   top: 0; left: 0; bottom: 0;
   z-index: 30;
-  overflow-y: auto;
+  overflow: hidden;
   padding-bottom: 16px;
+  transition: width .25s cubic-bezier(.4,0,.2,1), min-width .25s cubic-bezier(.4,0,.2,1);
 }
+.sidebar.collapsed { width: var(--sidebar-w-collapsed); min-width: var(--sidebar-w-collapsed); }
 .sidebar-logo {
   padding: 22px 18px 18px;
   border-bottom: 1px solid rgba(255,255,255,0.06);
   margin-bottom: 6px;
   flex-shrink: 0;
+  display: flex; align-items: center; gap: 10px;
+  white-space: nowrap;
 }
-.logo-name { font-family: 'DM Serif Display', serif; font-size: 22px; color: #fff; }
-.logo-sub { font-size: 11px; color: var(--sidebar-fg); margin-top: 2px; }
-.nav-section { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.28); padding: 12px 18px 3px; }
+.logo-icon { width: 30px; height: 30px; border-radius: 7px; background: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: 'DM Serif Display', serif; font-size: 14px; color: #fff; }
+.logo-text { overflow: hidden; transition: opacity .2s, width .25s; }
+.sidebar.collapsed .logo-text { opacity: 0; width: 0; pointer-events: none; }
+.logo-name { font-family: 'DM Serif Display', serif; font-size: 22px; color: #fff; white-space: nowrap; }
+.logo-sub { font-size: 11px; color: var(--sidebar-fg); margin-top: 2px; white-space: nowrap; }
+.nav-section {
+  font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  color: rgba(255,255,255,.28); padding: 12px 18px 3px;
+  white-space: nowrap; overflow: hidden;
+  transition: opacity .15s, height .25s, padding .25s;
+}
+.sidebar.collapsed .nav-section { opacity: 0; height: 0; padding: 0; pointer-events: none; }
 .nav-item {
   display: flex; align-items: center; gap: 10px;
   padding: 9px 14px; margin: 1px 7px;
@@ -117,15 +132,50 @@ body {
   cursor: pointer;
   font-size: 13.5px; font-weight: 500;
   user-select: none;
+  white-space: nowrap; overflow: hidden;
   transition: background .13s, color .13s;
+  position: relative;
 }
 .nav-item:hover { background: var(--sidebar-hover); color: #fff; }
 .nav-item.active { background: var(--sidebar-active-bg); color: var(--sidebar-active); }
 .nav-icon { width: 17px; height: 17px; flex-shrink: 0; opacity: .7; }
 .nav-item.active .nav-icon { opacity: 1; }
-.sidebar-footer { margin-top: auto; padding: 14px 18px 0; border-top: 1px solid rgba(255,255,255,.06); }
-.class-info { font-size: 12px; color: var(--sidebar-fg); }
+.nav-label { transition: opacity .2s; white-space: nowrap; }
+.sidebar.collapsed .nav-label { opacity: 0; }
+/* tooltip su icona quando collapsed */
+.sidebar.collapsed .nav-item:hover::after {
+  content: attr(data-label);
+  position: absolute; left: calc(var(--sidebar-w-collapsed) - 6px);
+  background: #2D2A42; color: #fff;
+  font-size: 12px; font-weight: 500;
+  padding: 5px 10px; border-radius: 7px;
+  white-space: nowrap; z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  pointer-events: none;
+}
+.sidebar-footer { margin-top: auto; padding: 14px 18px 0; border-top: 1px solid rgba(255,255,255,.06); overflow: hidden; }
+.class-info { font-size: 12px; color: var(--sidebar-fg); white-space: nowrap; transition: opacity .2s; }
 .class-info strong { color: rgba(255,255,255,.55); font-weight: 500; }
+.sidebar.collapsed .class-info { opacity: 0; }
+
+/* ─── SIDEBAR TOGGLE BUTTON ─── */
+.sidebar-toggle {
+  position: fixed;
+  top: 50%;
+  left: calc(var(--sidebar-w) - calc(var(--sidebar-toggle-size) / 2));
+  transform: translateY(-50%);
+  width: var(--sidebar-toggle-size); height: var(--sidebar-toggle-size);
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 40;
+  box-shadow: 0 2px 8px rgba(30,27,46,.12);
+  transition: left .25s cubic-bezier(.4,0,.2,1), background .15s;
+}
+.sidebar-toggle:hover { background: var(--accent-light); }
+.sidebar-toggle svg { transition: transform .25s; color: var(--fg-muted); }
+.sidebar-toggle.collapsed { left: calc(var(--sidebar-w-collapsed) - calc(var(--sidebar-toggle-size) / 2)); }
+.sidebar-toggle.collapsed svg { transform: rotate(180deg); }
 
 /* ─── BOTTOM NAV mobile ─── */
 .bottom-nav {
@@ -159,7 +209,9 @@ body {
   min-height: 100%;
   display: flex; flex-direction: column;
   min-width: 0;
+  transition: margin-left .25s cubic-bezier(.4,0,.2,1);
 }
+.main.collapsed { margin-left: var(--sidebar-w-collapsed); }
 .topbar {
   position: sticky;
   top: env(safe-area-inset-top, 0px);
@@ -383,8 +435,9 @@ tbody tr:last-child td { border-bottom: none; }
 /* ─── MOBILE ─── */
 @media (max-width: 680px) {
   .sidebar { display: none; }
+  .sidebar-toggle { display: none; }
   .bottom-nav { display: flex; }
-  .main { margin-left: 0; padding-bottom: var(--bottom-nav-h); }
+  .main { margin-left: 0 !important; padding-bottom: var(--bottom-nav-h); }
   .content { padding: 16px max(16px, env(safe-area-inset-right,0px)) 24px max(16px, env(safe-area-inset-left,0px)); }
   .topbar { padding: 12px 16px; }
   .stat-grid { grid-template-columns: repeat(2,1fr); }
@@ -406,51 +459,61 @@ tbody tr:last-child td { border-bottom: none; }
 </div>
 
 <!-- ─── SIDEBAR (desktop) ─── -->
-<nav class="sidebar">
+<nav class="sidebar" id="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-name">PayLisa</div>
-    <div class="logo-sub">Gestione versamenti classe</div>
+    <div class="logo-icon">PL</div>
+    <div class="logo-text">
+      <div class="logo-name">PayLisa</div>
+      <div class="logo-sub">Gestione versamenti classe</div>
+    </div>
   </div>
   <div class="nav-section">Panoramica</div>
-  <div class="nav-item active" data-nav="dashboard" onclick="go('dashboard')">
+  <div class="nav-item active" data-nav="dashboard" data-label="Dashboard" onclick="go('dashboard')">
     <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M3 4a1 1 0 011-1h4v6H3V4zm6-1h4a1 1 0 011 1v2h-5V3zM3 11h5v6H4a1 1 0 01-1-1v-5zm7 6v-4h5v3a1 1 0 01-1 1h-4zm0-6V8h5v3h-5z"/></svg>
-    Dashboard
+    <span class="nav-label">Dashboard</span>
   </div>
   <div class="nav-section">Gestione</div>
-  <div class="nav-item" data-nav="persone" onclick="go('persone')">
+  <div class="nav-item" data-nav="persone" data-label="Persone" onclick="go('persone')">
     <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
-    Persone
+    <span class="nav-label">Persone</span>
   </div>
-  <div class="nav-item" data-nav="versamenti" onclick="go('versamenti')">
+  <div class="nav-item" data-nav="versamenti" data-label="Versamenti" onclick="go('versamenti')">
     <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"/></svg>
-    Versamenti
+    <span class="nav-label">Versamenti</span>
   </div>
-  <div class="nav-item" data-nav="uscite" onclick="go('uscite')">
+  <div class="nav-item" data-nav="uscite" data-label="Uscite / Spese" onclick="go('uscite')">
     <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 4H4zm7 5a1 1 0 10-2 0v1H8a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V9z" clip-rule="evenodd"/></svg>
-    Uscite / Spese
+    <span class="nav-label">Uscite / Spese</span>
   </div>
   <div class="nav-section">Aggiungi</div>
-  <div class="nav-item" data-nav="aggiungi-persona" onclick="go('aggiungi-persona')">
+  <div class="nav-item" data-nav="aggiungi-persona" data-label="Aggiungi Persona" onclick="go('aggiungi-persona')">
     <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"/></svg>
-    Aggiungi Persona
+    <span class="nav-label">Aggiungi Persona</span>
   </div>
-  <div class="nav-item" data-nav="inserisci-versamento" onclick="go('inserisci-versamento')">
+  <div class="nav-item" data-nav="inserisci-versamento" data-label="Inserisci Versamento" onclick="go('inserisci-versamento')">
     <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/></svg>
-    Inserisci Versamento
+    <span class="nav-label">Inserisci Versamento</span>
   </div>
-  <div class="nav-item" data-nav="inserisci-uscita" onclick="go('inserisci-uscita')">
+  <div class="nav-item" data-nav="inserisci-uscita" data-label="Inserisci Uscita" onclick="go('inserisci-uscita')">
     <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/></svg>
-    Inserisci Uscita
+    <span class="nav-label">Inserisci Uscita</span>
   </div>
   <div class="nav-section">Configurazione</div>
-  <div class="nav-item" data-nav="impostazioni" onclick="go('impostazioni')">
+  <div class="nav-item" data-nav="impostazioni" data-label="Impostazioni" onclick="go('impostazioni')">
     <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
-    Impostazioni
+    <span class="nav-label">Impostazioni</span>
   </div>
   <div class="sidebar-footer">
     <div class="class-info">Classe <strong id="sidebar-classe">—</strong></div>
   </div>
 </nav>
+
+<!-- ─── TOGGLE SIDEBAR ─── -->
+<div class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" title="Apri / chiudi sidebar">
+  <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor">
+    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+  </svg>
+</div>
 
 <!-- ─── BOTTOM NAV (mobile) ─── -->
 <div class="bottom-nav">
@@ -1324,8 +1387,32 @@ async function onAddFotoSelected(evt) {
   if(thumb) thumb.innerHTML = `<img src="${b64}">`;
 }
 
+// ─── SIDEBAR TOGGLE ──────────────────────────────────────
+function toggleSidebar() {
+  const sb  = document.getElementById('sidebar');
+  const tog = document.getElementById('sidebar-toggle');
+  const mn  = document.querySelector('.main');
+  const col = sb.classList.toggle('collapsed');
+  tog.classList.toggle('collapsed', col);
+  if(mn) mn.classList.toggle('collapsed', col);
+  try { localStorage.setItem('pl_sidebar_collapsed', col ? '1' : '0'); } catch(e){}
+}
+function initSidebarState() {
+  try {
+    if(localStorage.getItem('pl_sidebar_collapsed') === '1') {
+      const sb  = document.getElementById('sidebar');
+      const tog = document.getElementById('sidebar-toggle');
+      const mn  = document.querySelector('.main');
+      if(sb)  sb.classList.add('collapsed');
+      if(tog) tog.classList.add('collapsed');
+      if(mn)  mn.classList.add('collapsed');
+    }
+  } catch(e){}
+}
+
 // ─── INIT ────────────────────────────────────────────────
 (async () => {
+  initSidebarState();
   setLoading(true);
   try {
     await loadAll();
